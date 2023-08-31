@@ -1,3 +1,3 @@
 #!/bin/bash
 
-pip install -r ./docker/requirements/main.txt
+pip3 install -r ./docker/requirements/main.txt

@@ -11,7 +11,10 @@ https://docs.djangoproject.com/en/4.0/ref/settings/
 """
 
 import os
+import datetime
+import logging.config
 from pathlib import Path
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -20,7 +23,15 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-sd26+@9!l0w$&#aw0ij^f4x#lyxjazsfn9s+drlyj02vq&(l8e'
+if not os.path.exists(os.path.join(BASE_DIR, 'secret_key.txt')):
+    from django.core.management.utils import get_random_secret_key
+    SECRET_KEY = get_random_secret_key()
+    with open(os.path.join(BASE_DIR, 'secret_key.txt'), 'w', encoding='utf8') as f:
+        f.write(SECRET_KEY)
+        f.close()
+
+with open(os.path.join(BASE_DIR, 'secret_key.txt'), 'r', encoding='utf8') as f:
+    SECRET_KEY = f.read().strip()
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get("DJANGO_DEBUG", False)
@@ -28,11 +39,14 @@ DEBUG = os.environ.get("DJANGO_DEBUG", False)
 if DEBUG:
     # If debug true, allow all
     ALLOWED_HOSTS = ['*']
+    CSRF_TRUSTED_ORIGINS = ['http://localhost']
 else:
     ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', default=['example.com'])
 
 
+CORS_ORIGIN_ALLOW_ALL = True
 # Application definition
+APP_NAME = 'Loan for Good'
 
 DJANGO_APPS = [
     'django.contrib.admin',
@@ -47,10 +61,12 @@ THIRD_PARTY_APPS = [
     'django_extensions',
     'rest_framework',
     'corsheaders',
+    'django_celery_results',
 ]
 
 PROJECT_APPS = [
     'core',
+    'loan',
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + PROJECT_APPS
@@ -84,6 +100,23 @@ TEMPLATES = [
     },
 ]
 
+REST_FRAMEWORK = {
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated'
+    ],
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.BasicAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
+        'rest_framework.authentication.TokenAuthentication',
+    ],
+    'DEFAULT_RENDERER_CLASSES': (
+        'rest_framework.renderers.JSONRenderer',
+        'rest_framework.renderers.BrowsableAPIRenderer',
+    ),
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
+    'PAGE_SIZE': 10,
+}
+
 WSGI_APPLICATION = 'setup.wsgi.application'
 
 GRAPH_MODELS = {
@@ -99,11 +132,11 @@ GRAPH_MODELS = {
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.environ.get('POSTGRES_NAME'),
+        'NAME': os.environ.get('POSTGRES_DATABASE'),
         'USER': os.environ.get('POSTGRES_USER'),
         'PASSWORD': os.environ.get('POSTGRES_PASSWORD'),
-        'HOST': 'database',
-        'PORT': 5432,
+        'HOST': os.environ.get('POSTGRES_HOST'),
+        'PORT': os.environ.get('POSTGRES_PORT'),
     }
 }
 
@@ -133,7 +166,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'America/Sao_Paulo'
 
 USE_I18N = True
 
@@ -149,3 +182,135 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/4.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Celery Configuration
+
+CELERY_BROKER_URL = 'redis://{user}:{password}@{host}:{port}/{db}'.format(
+    user=os.environ.get('REDIS_USER'),
+    password=os.environ.get('REDIS_PASSWORD'),
+    host=os.environ.get('REDIS_HOST'),
+    port=os.environ.get('REDIS_PORT'),
+    db=os.environ.get('REDIS_DB'),
+)
+
+CELERY_ACCEPT_CONTENT = ['json']
+
+CELERY_TASK_SERIALIZER = 'json'
+
+CELERY_RESULT_EXPIRES = datetime.timedelta(days=1)
+
+CELERY_RESULT_BACKEND = 'django-db'
+CELERY_TIMEZONE = "America/Sao_Paulo"
+CELERY_TASK_TRACK_STARTED = True
+CELERY_TASK_TIME_LIMIT = 30 * 60 
+
+# Cache
+
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": CELERY_BROKER_URL,
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        }
+    }
+}
+
+# Logging
+LOGFILE_ROOT = os.path.join(BASE_DIR, 'logs')
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': True,
+    'formatters': {
+        'console': {
+            'format': '[%(asctime)s] (%(levelname)s) %(message)s',
+        },
+        'verbose': {
+            'format': '[%(asctime)s] [%(pathname)s:%(lineno)s] %(message)s',
+        },
+        'simple': {
+            'format': '[%(asctime)s] %(message)s',
+        },
+        'query': {
+            'format': '[%(asctime)s] %(message)s',
+        }
+    },
+    'filters': {
+        'debug': {
+            '()': 'setup.log_filters.DebugFilter',
+        },
+        'info': {
+            '()': 'setup.log_filters.InfoFilter',
+        },
+        'less_equal_info': {
+            '()': 'setup.log_filters.LessEqualInfoFilter'
+        }
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'console',
+        },
+        'django.info': {
+            'level': 'INFO',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': os.path.join(LOGFILE_ROOT, 'django-info.log'),
+            'formatter': 'simple',
+            'maxBytes': 1024 * 1024 * 2,
+            'backupCount': 3,
+            'filters': ['info']
+        },
+        'django.error': {
+            'level': 'ERROR',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': os.path.join(LOGFILE_ROOT, 'django-error.log'),
+            'formatter': 'verbose',
+            'maxBytes': 1024 * 1024 * 2,
+            'backupCount': 3,
+        },
+        'django.queries': {
+            'level': 'DEBUG',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': os.path.join(LOGFILE_ROOT, 'django-queries.log'),
+            'formatter': 'query',
+            'maxBytes': 1024 * 1024 * 2,
+            'backupCount': 3,
+        },
+        
+        'lfg.error': {
+            'level': 'ERROR',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': os.path.join(LOGFILE_ROOT, 'atena-error.log'),
+            'formatter': 'verbose',
+            'maxBytes': 1024 * 1024 * 2,
+            'backupCount': 3,
+        },
+        'lfg.info': {
+            'level': 'INFO',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': os.path.join(LOGFILE_ROOT, 'atena-info.log'),
+            'formatter': 'simple',
+            'maxBytes': 1024 * 1024 * 2,
+            'backupCount': 3,
+            'filters': ['less_equal_info']
+        },
+    },
+    'loggers': {
+        'django.db.backends': {
+            'level': 'DEBUG',
+            'handlers': ['django.queries'],
+            'propagate': False,
+        },
+        'django': {
+            'level': 'DEBUG',
+            'handlers': ['console', 'django.info',  'django.error'],
+            'propagate': False,
+        },
+        'lfg': {
+            'level': 'DEBUG',
+            'handlers': ['console', 'lfg.info', 'lfg.error'],
+            'propagate': False
+        },
+    }
+}
+logging.config.dictConfig(LOGGING)

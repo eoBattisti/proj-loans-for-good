@@ -1,0 +1,14 @@
+[
+{
+  "model": "loan.loanprocessorapi",
+  "pk": "493cd0c3-e944-4602-8265-05de9f46e75c",
+  "fields": {
+    "created_at": "2023-08-31T01:01:37.719Z",
+    "updated_at": "2023-08-31T01:01:37.719Z",
+    "url": "loan-processor.digitalsys.com.br/api/v1",
+    "username": null,
+    "password": null,
+    "scheme": "https"
+  }
+}
+]

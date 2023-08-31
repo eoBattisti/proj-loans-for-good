@@ -2,11 +2,16 @@ version: '3.3'
 
 services:
 
+  redis:
+    env_file:
+      - ./env/redis.env
+
   database:
     env_file:
       - ./env/database.env
 
   application:
     env_file:
+      - ./env/redis.env
       - ./env/database.env
       - ./env/application.env

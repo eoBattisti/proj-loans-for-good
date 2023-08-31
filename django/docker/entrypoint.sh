@@ -1,16 +1,21 @@
-#!/usr/bin/env bash
-
+#!/bin/bash
 
 echo "Generating Migrations"
-python manage.py makemigrations
+python3 manage.py makemigrations
 echo "Done!"
 
 echo "Migrate..."
-python manage.py migrate --noinput
+python3 manage.py migrate --noinput
 echo "Migrated!"
 
 echo "Loading fixtures..."
-python manage.py loaddata */fixtures/*.json
+python3 manage.py loaddata */fixtures/*.json
 echo "Done!"
 
-python manage.py runserver 0.0.0.0:9000
+echo "Starting celery.."
+celery -A setup worker -l info -Q default --without-mingle --without-gossip \
+-n default.%h --pidfile "/var/run/worker.pid" -f "/var/log/celery.log" &
+echo "Done!"
+
+
+python3 manage.py runserver 0.0.0.0:9000

@@ -1,31 +1,55 @@
 version: '3.3'
 services:
   redis:
+    container_name: lfg_redis
     image: redis
     command: redis-server
-    ports:
-      - "14000:6379"
+    networks:
+      - lfg
 
   database:
+    container_name: lfg_db
     image: postgres
     volumes:
       - database_data:/var/lib/postgresql/data
+    networks:
+      - lfg
 
   application:
+    container_name: lfg_app
     build: 
       context: ./django/
     restart: always
-    command: python manage.py runserver 0.0.0.0:9000
+    working_dir: /app
+    command: sh ./docker/wait_db.sh && sh ./docker/entrypoint.sh
     ports:
       - "127.0.0.1:9000:9000"
     volumes:
-      - ./django/:/setup
+      - ./django/:/app
     links:
       - database
       - redis
     depends_on:
       - database
       - redis
+    networks:
+      - lfg
+
+  frontend:
+    container_name: lfg_frontend
+    build: 
+      context: ./frontend/
+    restart: always
+    ports:
+      - "127.0.0.1:3000:3000"
+    volumes:
+      - ./frontend/:/app
+    networks:
+      - lfg
 
 volumes:
   database_data:
+
+networks:
+  lfg:
+    name: lfg
