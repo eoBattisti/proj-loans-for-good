@@ -43,6 +43,7 @@ const LoanFormList = (props) => {
                     <Typography variant="h5">{item.title}</Typography>
                   </AccordionSummary>
                   <AccordionDetails>
+                    <Typography variant="h6">{item.descritpion}</Typography>
                     <LoanFormItem item={item}/>
                   </AccordionDetails>
                 </Accordion>

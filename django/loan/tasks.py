@@ -22,7 +22,6 @@ def process_loan(client_name, client_document) -> bool:
     response: requests.Response = session.post(loan_processor.mount_url(endpoint='loan'),
                                               params=payload,
                                               headers=headers)
-    print('Response: ', response, flush=True)
     if response.status_code != 200:
         raise Exception('Error processing loan: {}'.format(response.text))
     return response.json().get('approved', False)

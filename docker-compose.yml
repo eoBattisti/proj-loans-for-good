@@ -17,7 +17,7 @@ services:
 
   application:
     container_name: lfg_app
-    build: 
+    build:
       context: ./django/
     restart: always
     working_dir: /app
@@ -37,7 +37,7 @@ services:
 
   frontend:
     container_name: lfg_frontend
-    build: 
+    build:
       context: ./frontend/
     restart: always
     ports:
@@ -46,6 +46,8 @@ services:
       - ./frontend/:/app
     networks:
       - lfg
+    depends_on:
+      - application
 
 volumes:
   database_data:
