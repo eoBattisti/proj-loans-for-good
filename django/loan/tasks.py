@@ -1,9 +1,9 @@
-import ast
 import requests
 from requests.adapters import HTTPAdapter, Retry
 
 from setup.celery import app
-from loan.models import Loan, LoanProcessorApi
+from loan.models import LoanProcessorApi
+
 
 @app.task
 def process_loan(client_name, client_document) -> bool:
@@ -13,7 +13,8 @@ def process_loan(client_name, client_document) -> bool:
         raise LoanProcessorApi.DoesNotExist("Loan Processor is not available.")
 
     session: requests.Session = requests.Session()
-    retries: Retry = Retry(total=5, allowed_methods=["POST"], backoff_factor=1, status_forcelist=[500, 502, 503, 504, 404])
+    retries: Retry = Retry(total=5, allowed_methods=["POST"],
+                           backoff_factor=1, status_forcelist=[500, 502, 503, 504, 404])
     session.mount(loan_processor.scheme, HTTPAdapter(max_retries=retries))
 
     payload: dict = {'name': client_name, 'document': client_document}
