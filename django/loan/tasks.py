@@ -9,7 +9,7 @@ from loan.models import Loan, LoanProcessorApi
 def process_loan(client_name, client_document) -> bool:
     loan_processor: LoanProcessorApi = LoanProcessorApi.objects.first()
 
-    if not loan_processor.exists():
+    if not loan_processor:
         raise LoanProcessorApi.DoesNotExist("Loan Processor is not available.")
 
     session: requests.Session = requests.Session()
@@ -26,4 +26,3 @@ def process_loan(client_name, client_document) -> bool:
     if response.status_code != 200:
         raise Exception('Error processing loan: {}'.format(response.text))
     return response.json().get('approved', False)
-

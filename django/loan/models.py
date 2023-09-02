@@ -24,6 +24,7 @@ class LoanProcessorApi(BaseModel):
         return f'{self.scheme}://{self.url}/{endpoint}/'
 
 class LoanForm(BaseModel):
+    descritpion = models.TextField(verbose_name=_("Decription"))
     title = models.CharField(verbose_name=_('Title'), max_length=255)
     fields = models.ManyToManyField('core.CustomField', verbose_name=_('Fields'), related_name='loan_forms')
 

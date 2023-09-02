@@ -7,4 +7,4 @@ class CustomFieldSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CustomField
-        exclude = ['raw_value']
+        fields = '__all__'

@@ -102,7 +102,7 @@ TEMPLATES = [
 
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.IsAuthenticated'
+        'rest_framework.permissions.AllowAny'
     ],
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework.authentication.BasicAuthentication',
@@ -202,7 +202,7 @@ CELERY_RESULT_EXPIRES = datetime.timedelta(days=1)
 CELERY_RESULT_BACKEND = 'django-db'
 CELERY_TIMEZONE = "America/Sao_Paulo"
 CELERY_TASK_TRACK_STARTED = True
-CELERY_TASK_TIME_LIMIT = 30 * 60 
+CELERY_TASK_TIME_LIMIT = 30 * 60
 
 # Cache
 
@@ -276,7 +276,7 @@ LOGGING = {
             'maxBytes': 1024 * 1024 * 2,
             'backupCount': 3,
         },
-        
+
         'lfg.error': {
             'level': 'ERROR',
             'class': 'logging.handlers.RotatingFileHandler',
