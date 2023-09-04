@@ -26,7 +26,11 @@ class LoanProcessorApi(BaseModel):
 class LoanForm(BaseModel):
     descritpion = models.TextField(verbose_name=_("Decription"), blank=True, null=True)
     title = models.CharField(verbose_name=_('Title'), max_length=255)
-    fields = models.ManyToManyField('core.CustomField', verbose_name=_('Fields'), related_name='loan_forms')
+    fields = models.ManyToManyField('core.CustomField',
+                                    verbose_name=_('Fields'),
+                                    null=True,
+                                    blank=True,
+                                    related_name='loan_forms')
 
     class Meta:
         verbose_name = _('Loan Form')

@@ -35,20 +35,6 @@ services:
     networks:
       - lfg
 
-  frontend:
-    container_name: lfg_frontend
-    build:
-      context: ./frontend/
-    restart: always
-    ports:
-      - "127.0.0.1:3000:3000"
-    volumes:
-      - ./frontend/:/app
-    networks:
-      - lfg
-    depends_on:
-      - application
-
 volumes:
   database_data:
 

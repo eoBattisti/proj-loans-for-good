@@ -6,7 +6,7 @@ from loan.models import LoanProcessorApi
 
 
 @app.task
-def process_loan(client_name, client_document) -> bool:
+def process_loan(client_name: str, client_document: str) -> bool:
     loan_processor: LoanProcessorApi = LoanProcessorApi.objects.first()
 
     if not loan_processor:

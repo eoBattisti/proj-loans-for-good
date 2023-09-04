@@ -15,7 +15,3 @@ services:
       - ./env/redis.env
       - ./env/database.env
       - ./env/application.env
-
-  frontend:
-    env_file:
-      - ./env/frontend.env
