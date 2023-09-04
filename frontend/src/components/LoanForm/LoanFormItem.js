@@ -1,10 +1,8 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
-import Button from "@mui/material/Button";
 import SendIcon from "@mui/icons-material/Send";
 import TextField from "@mui/material/TextField";
-import Typography from "@mui/material/Typography";
 import LoadingButton from "@mui/lab/LoadingButton";
 import Snackbar from "@mui/material/Snackbar";
 
@@ -76,19 +74,23 @@ const LoanFormItem = ({ item }) => {
         return;
       }
 
+      var allFieldsOptional = true
       var find = false;
       for (let field of item.fields) {
-        console.log(field);
         if (!field.optional) {
           for (let el of formData["data"]) {
             if (el.field === field.name) {
               find = true;
+              allFieldsOptional = false
               break;
             }
           }
         }
       }
-      if (!find) {
+
+
+
+      if (!find && !allFieldsOptional) {
         setExtraFieldsError(true);
         return;
       }
@@ -98,6 +100,7 @@ const LoanFormItem = ({ item }) => {
       const data = await LoanService.addLoan(formData);
       setResponse(data);
     } catch (e) {
+      console.log(e)
       setError(true);
       setOpen(true);
     } finally {
